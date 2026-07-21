@@ -1,0 +1,26 @@
+# Dependencies
+**/node_modules
+
+# Env files (see .env.example in client/ and server/)
+**/.env
+**/.env.local
+
+# Build output
+client/dist
+server/dist
+
+# Uploads
+server/uploads/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# Claude Code local session state
+.claude/

@@ -1,0 +1,62 @@
+# Full InsightIQ stack — Postgres, the API, and the static frontend.
+#
+# Requires server/.env to already exist (copy from server/.env.example and
+# fill in JWT_SECRET / ENCRYPTION_KEY / ANTHROPIC_API_KEY, etc. — the same
+# file used for local `npm run dev`). DATABASE_URL and CLIENT_URL are
+# overridden below to use the in-network service names.
+#
+# Usage: docker compose up -d --build
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: insightiq-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: insightiq
+    ports:
+      - "5432:5432"
+    volumes:
+      - insightiq_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  server:
+    build:
+      context: ./server
+    container_name: insightiq-server
+    restart: unless-stopped
+    env_file:
+      - ./server/.env
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/insightiq
+      CLIENT_URL: http://localhost:5173
+      PORT: 5000
+      NODE_ENV: production
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - insightiq_uploads:/app/uploads
+
+  client:
+    build:
+      context: ./client
+      args:
+        VITE_API_URL: http://localhost:5000/api
+    container_name: insightiq-client
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - server
+
+volumes:
+  insightiq_postgres_data:
+  insightiq_uploads:

@@ -1,0 +1,205 @@
+// InsightIQ data model.
+// Covers auth/RBAC (Phase 2), data source connections (Phase 3),
+// the AI query engine + saved reports (Phase 4/6), and dashboards (Phase 5).
+// Defined up front so later phases are additive migrations, not schema churn.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  ANALYST
+  VIEWER
+}
+
+enum DataSourceType {
+  POSTGRES
+  MYSQL
+  SQLITE
+  CSV
+  EXCEL
+}
+
+enum DataSourceStatus {
+  CONNECTED
+  ERROR
+  PENDING
+}
+
+enum WidgetType {
+  BAR
+  LINE
+  PIE
+  AREA
+  TABLE
+}
+
+enum InsightSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(VIEWER)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  dataSources   DataSource[]
+  dashboards    Dashboard[]
+  savedQueries  SavedQuery[]
+  reports       Report[]         @relation("ReportOwner")
+  sharedReports ReportShare[]
+  auditLogs     AuditLog[]
+
+  @@map("users")
+}
+
+model DataSource {
+  id             String            @id @default(cuid())
+  name           String
+  type           DataSourceType
+  status         DataSourceStatus  @default(PENDING)
+  // Connection details for live DBs (host/port/db name/user). The password
+  // is stored encrypted at rest — never in plaintext. Null for file sources.
+  connectionInfo Json?
+  // Storage path/key for uploaded CSV/Excel files.
+  filePath       String?
+  schemaCache    Json?
+  lastConnectedAt DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId String
+
+  savedQueries SavedQuery[]
+  dashboards   Dashboard[]
+  insights     Insight[]
+
+  @@map("data_sources")
+}
+
+model SavedQuery {
+  id           String   @id @default(cuid())
+  question     String
+  generatedSql String
+  resultPreview Json?
+  createdAt    DateTime @default(now())
+
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId String
+
+  dataSource   DataSource @relation(fields: [dataSourceId], references: [id], onDelete: Cascade)
+  dataSourceId String
+
+  widgets Widget[]
+
+  @@map("saved_queries")
+}
+
+model Dashboard {
+  id        String   @id @default(cuid())
+  name        String
+  description String?
+  layout      Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId String
+
+  dataSource   DataSource? @relation(fields: [dataSourceId], references: [id], onDelete: SetNull)
+  dataSourceId String?
+
+  widgets Widget[]
+  reports Report[]
+
+  @@map("dashboards")
+}
+
+model Widget {
+  id         String     @id @default(cuid())
+  title      String
+  type       WidgetType
+  config     Json
+  position   Json
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  dashboard   Dashboard @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+  dashboardId String
+
+  savedQuery   SavedQuery? @relation(fields: [savedQueryId], references: [id], onDelete: SetNull)
+  savedQueryId String?
+
+  @@map("widgets")
+}
+
+model Report {
+  id        String   @id @default(cuid())
+  name      String
+  format    String   @default("pdf")
+  createdAt DateTime @default(now())
+
+  owner   User   @relation("ReportOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId String
+
+  dashboard   Dashboard? @relation(fields: [dashboardId], references: [id], onDelete: SetNull)
+  dashboardId String?
+
+  shares ReportShare[]
+
+  @@map("reports")
+}
+
+model ReportShare {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  report   Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  reportId String
+
+  sharedWith   User   @relation(fields: [sharedWithId], references: [id], onDelete: Cascade)
+  sharedWithId String
+
+  @@unique([reportId, sharedWithId])
+  @@map("report_shares")
+}
+
+model Insight {
+  id          String           @id @default(cuid())
+  title       String
+  description String
+  severity    InsightSeverity  @default(INFO)
+  metadata    Json?
+  createdAt   DateTime         @default(now())
+
+  dataSource   DataSource @relation(fields: [dataSourceId], references: [id], onDelete: Cascade)
+  dataSourceId String
+
+  @@map("insights")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@map("audit_logs")
+}
