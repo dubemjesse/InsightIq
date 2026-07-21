@@ -182,3 +182,7 @@ public URL.
   colors (see `client/src/utils/chartColors.js`) — chart series use a
   slightly deepened step of the accent green, since the full-brightness UI
   green is too light to read well as a data mark on the navy surface.
+
+## Author
+
+- **Jesse Odoh**
