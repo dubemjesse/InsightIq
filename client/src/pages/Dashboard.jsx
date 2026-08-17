@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { Sparkles, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
+import Footer from '../components/layout/Footer';
 import InsightCard from '../components/insights/InsightCard';
 import { useAuth } from '../hooks/useAuth';
 import api from '../utils/api';
@@ -28,9 +29,9 @@ export default function Dashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-navy">
+    <div className="flex min-h-screen flex-col bg-navy">
       <Navbar />
-      <main className="mx-auto max-w-3xl px-6 py-12">
+      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-12">
         <h1 className="text-2xl font-bold text-white">Welcome, {user?.name}</h1>
         <p className="mt-2 text-slate-400">
           You&apos;re signed in as <span className="text-electric">{user?.role}</span>.
@@ -80,6 +81,7 @@ export default function Dashboard() {
           ))}
         </div>
       </main>
+      <Footer />
     </div>
   );
 }
