@@ -9,6 +9,7 @@ import { ArrowLeft, Download, FileText, Trash2 } from 'lucide-react';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import Navbar from '../components/layout/Navbar';
+import Footer from '../components/layout/Footer';
 import WidgetCard from '../components/dashboard/WidgetCard';
 import api from '../utils/api';
 
@@ -111,17 +112,18 @@ export default function DashboardBuilder() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-navy">
+      <div className="flex min-h-screen flex-col bg-navy">
         <Navbar />
-        <p className="px-6 py-12 text-sm text-slate-400">Loading dashboard…</p>
+        <p className="flex-1 px-6 py-12 text-sm text-slate-400">Loading dashboard…</p>
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-navy">
+    <div className="flex min-h-screen flex-col bg-navy">
       <Navbar />
-      <main className="mx-auto max-w-6xl px-6 py-8">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8">
         <Link to="/dashboards" className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-200">
           <ArrowLeft size={14} /> All dashboards
         </Link>
@@ -190,6 +192,7 @@ export default function DashboardBuilder() {
           </div>
         )}
       </main>
+      <Footer />
     </div>
   );
 }
