@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, UploadCloud, Database as DatabaseIcon } from 'lucide-react';
 import Navbar from '../components/layout/Navbar';
+import Footer from '../components/layout/Footer';
 import DataSourceCard from '../components/dataSources/DataSourceCard';
 import ConnectDbModal from '../components/dataSources/ConnectDbModal';
 import UploadFileModal from '../components/dataSources/UploadFileModal';
@@ -23,9 +24,9 @@ export default function DataSources() {
   });
 
   return (
-    <div className="min-h-screen bg-navy">
+    <div className="flex min-h-screen flex-col bg-navy">
       <Navbar />
-      <main className="mx-auto max-w-5xl px-6 py-12">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-12">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-white">Data sources</h1>
@@ -77,6 +78,7 @@ export default function DataSources() {
           </div>
         </div>
       </main>
+      <Footer />
 
       {showConnect && <ConnectDbModal onClose={() => setShowConnect(false)} />}
       {showUpload && <UploadFileModal onClose={() => setShowUpload(false)} />}
