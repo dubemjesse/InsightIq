@@ -16,7 +16,7 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: insightiq
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
       - insightiq_postgres_data:/var/lib/postgresql/data
     healthcheck:
