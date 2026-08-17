@@ -3,6 +3,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Sparkles, BookmarkPlus } from 'lucide-react';
 import Navbar from '../components/layout/Navbar';
+import Footer from '../components/layout/Footer';
 import Button from '../components/ui/Button';
 import ChartWidget from '../components/dashboard/ChartWidget';
 import SaveToDashboardModal from '../components/dashboard/SaveToDashboardModal';
@@ -50,9 +51,9 @@ export default function Ask() {
   };
 
   return (
-    <div className="min-h-screen bg-navy">
+    <div className="flex min-h-screen flex-col bg-navy">
       <Navbar />
-      <main className="mx-auto max-w-4xl px-6 py-12">
+      <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-12">
         <div className="flex items-center gap-2">
           <Sparkles className="text-electric" size={22} />
           <h1 className="text-2xl font-bold text-white">Ask your data</h1>
@@ -182,6 +183,7 @@ export default function Ask() {
           </div>
         )}
       </main>
+      <Footer />
 
       {showSaveModal && result && (
         <SaveToDashboardModal
