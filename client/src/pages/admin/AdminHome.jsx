@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '../../components/layout/Navbar';
+import Footer from '../../components/layout/Footer';
 import StatCard from '../../components/admin/StatCard';
 import UsersTable from '../../components/admin/UsersTable';
 import DataSourcesTable from '../../components/admin/DataSourcesTable';
@@ -12,9 +13,9 @@ export default function AdminHome() {
   });
 
   return (
-    <div className="min-h-screen bg-navy">
+    <div className="flex min-h-screen flex-col bg-navy">
       <Navbar />
-      <main className="mx-auto max-w-5xl px-6 py-12">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-12">
         <h1 className="text-2xl font-bold text-white">Admin panel</h1>
         <p className="mt-2 text-slate-400">Manage users, roles, and oversee every connected data source.</p>
 
@@ -40,6 +41,7 @@ export default function AdminHome() {
           </div>
         </section>
       </main>
+      <Footer />
     </div>
   );
 }
