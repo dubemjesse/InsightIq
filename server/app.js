@@ -7,6 +7,7 @@ const cookieParser = require('cookie-parser');
 const env = require('./config/env');
 const healthRoutes = require('./routes/health.routes');
 const authRoutes = require('./routes/auth.routes');
+const overviewRoutes = require('./routes/overview.routes');
 const dataSourceRoutes = require('./routes/dataSource.routes');
 const queryRoutes = require('./routes/query.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
@@ -37,6 +38,7 @@ app.use(morgan(env.nodeEnv === 'development' ? 'dev' : 'combined'));
 // Routes.
 app.use('/api/health', healthRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/overview', overviewRoutes);
 app.use('/api/data-sources', dataSourceRoutes);
 app.use('/api/query', queryRoutes);
 app.use('/api/dashboards', dashboardRoutes);

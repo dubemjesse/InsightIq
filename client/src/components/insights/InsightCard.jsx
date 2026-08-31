@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { X, AlertTriangle, AlertCircle, Info } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../utils/api';
+import { relativeTime } from '../../utils/format';
 
 const SEVERITY_META = {
   CRITICAL: { icon: AlertTriangle, classes: 'bg-red-500/15 text-red-400 border-red-500/30' },
@@ -15,7 +16,10 @@ export default function InsightCard({ insight }) {
 
   const dismissMutation = useMutation({
     mutationFn: () => api.delete(`/insights/${insight.id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['insights'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['insights'] });
+      queryClient.invalidateQueries({ queryKey: ['overview'] });
+    },
     onError: () => toast.error('Could not dismiss this insight.'),
   });
 
@@ -38,7 +42,7 @@ export default function InsightCard({ insight }) {
         </div>
         <p className="mt-1 text-sm text-slate-400">{insight.description}</p>
         <p className="mt-2 text-xs text-slate-500">
-          {insight.dataSource?.name} · {new Date(insight.createdAt).toLocaleString()}
+          {insight.dataSource?.name} · {relativeTime(insight.createdAt)}
         </p>
       </div>
     </div>
