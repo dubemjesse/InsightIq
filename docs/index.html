@@ -1,0 +1,995 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InsightIQ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#03122a; --bg-raised:#0a1d3d; --surface:#0c1930; --surface-2:#11213f;
+    --border:#1e304f; --border-strong:#2b4066;
+    --ink:#e6ebf3; --ink-dim:#93a1b8; --ink-faint:#64748f;
+    --accent:#378add; --accent-2:#5aa3e8; --good:#97c459; --warn:#fbbf24; --bad:#f87171; --bad-strong:#ef4444;
+    --font-ui:'Inter',ui-sans-serif,system-ui,-apple-system,sans-serif;
+    --font-mono:'JetBrains Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
+  }
+  *{box-sizing:border-box;}
+  html{color-scheme:dark;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink); font-family:var(--font-ui);
+    -webkit-font-smoothing:antialiased; min-height:100vh;
+  }
+  ::selection{ background:rgba(55,138,221,.3); }
+  a{ color:inherit; }
+  button{ font-family:inherit; }
+  h1,h2,h3{ text-wrap:balance; margin:0; }
+  .tabular{ font-variant-numeric:tabular-nums; }
+
+  /* ---------- layout shell ---------- */
+  .page{ display:flex; flex-direction:column; min-height:100vh; }
+
+  .demo-strip{
+    display:flex; align-items:center; justify-content:center; gap:.6rem;
+    background:var(--bg-raised); border-bottom:1px solid var(--border);
+    padding:.55rem 1rem; font-size:.78rem; color:var(--ink-dim); text-align:center; flex-wrap:wrap;
+  }
+  .demo-strip strong{ color:var(--ink); font-weight:600; }
+  .demo-strip a{ color:var(--accent-2); font-weight:600; text-decoration:none; }
+  .demo-strip a:hover{ text-decoration:underline; }
+  .demo-strip button{
+    background:none; border:0; color:var(--ink-faint); cursor:pointer; font-size:1rem;
+    line-height:1; padding:.15rem .3rem; border-radius:.35rem;
+  }
+  .demo-strip button:hover{ color:var(--ink); background:var(--surface-2); }
+  .demo-strip[hidden]{ display:none; }
+
+  header.nav{ position:relative; border-bottom:1px solid var(--border); background:var(--bg); }
+  .nav-row{ display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:.9rem 1.5rem; }
+  .nav-left{ display:flex; align-items:center; gap:2rem; min-width:0; }
+  .brand{ display:flex; align-items:center; gap:.5rem; text-decoration:none; cursor:pointer; background:none; border:0; padding:0; }
+  .brand span{ font-size:1.25rem; font-weight:700; letter-spacing:-.01em; color:#fff; }
+  .brand span b{ color:var(--accent); font-weight:700; }
+  .tabs{ display:flex; align-items:center; gap:1.5rem; }
+  .tab-link{
+    background:none; border:0; cursor:pointer; font:inherit; font-size:.875rem; font-weight:500;
+    color:var(--ink-faint); padding:.25rem 0; white-space:nowrap;
+  }
+  .tab-link:hover{ color:var(--ink-dim); }
+  .tab-link.active{ color:#fff; }
+
+  .nav-right{ display:flex; align-items:center; gap:.75rem; }
+  .role-group{ display:flex; border:1px solid var(--border); border-radius:.6rem; overflow:hidden; }
+  .role-btn{
+    background:var(--surface); border:0; color:var(--ink-faint); font-size:.72rem; font-weight:600;
+    padding:.4rem .6rem; cursor:pointer; letter-spacing:.02em;
+  }
+  .role-btn+.role-btn{ border-left:1px solid var(--border); }
+  .role-btn.active{ background:var(--surface-2); color:#fff; }
+  .role-btn:hover:not(.active){ color:var(--ink-dim); }
+  .role-pill{ border-radius:999px; padding:.3rem .65rem; font-size:.72rem; font-weight:600; white-space:nowrap; }
+  .role-pill.ADMIN{ background:rgba(151,196,89,.15); color:var(--good); }
+  .role-pill.ANALYST{ background:rgba(55,138,221,.15); color:var(--accent); }
+  .role-pill.VIEWER{ background:rgba(148,163,184,.15); color:#cbd5e1; }
+  .user-name{ font-size:.875rem; color:#cbd5e1; white-space:nowrap; }
+  .btn-ghost{
+    border:1px solid var(--border); background:transparent; color:#e2e8f0; border-radius:.6rem;
+    padding:.45rem .8rem; font-size:.85rem; font-weight:500; cursor:pointer; transition:border-color .15s;
+    display:inline-flex; align-items:center; gap:.4rem; white-space:nowrap;
+  }
+  .btn-ghost:hover{ border-color:var(--accent); }
+  .btn-ghost:disabled{ opacity:.5; cursor:default; }
+  .btn-primary{
+    border:0; background:var(--accent); color:#fff; border-radius:.6rem; padding:.5rem .9rem;
+    font-size:.85rem; font-weight:600; cursor:pointer; transition:background .15s;
+    display:inline-flex; align-items:center; gap:.45rem; white-space:nowrap;
+  }
+  .btn-primary:hover{ background:var(--accent-2); }
+  .btn-primary:disabled{ opacity:.6; cursor:default; }
+
+  @media (max-width: 860px){
+    .tabs, .user-name{ display:none; }
+  }
+
+  main{ flex:1; width:100%; }
+  .container{ margin:0 auto; padding:2.5rem 1.5rem 3.5rem; }
+  .w-6{ max-width:72rem; }
+  .w-5{ max-width:64rem; }
+  .w-4{ max-width:56rem; }
+
+  footer.site{ padding:1.5rem; text-align:center; font-size:.75rem; color:var(--ink-faint); }
+  footer.site a{ color:var(--accent-2); text-decoration:none; }
+  footer.site a:hover{ text-decoration:underline; }
+  footer.site .sep{ margin:0 .4rem; }
+
+  [hidden]{ display:none !important; }
+
+  /* ---------- overview page ---------- */
+  .page-head{ display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:1rem; }
+  .page-head h1{ font-size:1.5rem; font-weight:700; color:#fff; }
+  .page-head p.sub{ margin-top:.3rem; font-size:.875rem; color:var(--ink-dim); }
+  .page-head .sub b{ color:var(--accent); font-weight:600; }
+  .head-actions{ display:flex; flex-wrap:wrap; gap:.5rem; }
+
+  .kpi-grid{ margin-top:2rem; display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; }
+  @media (max-width:900px){ .kpi-grid{ grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:480px){ .kpi-grid{ grid-template-columns:1fr;} }
+
+  .card{ border:1px solid var(--border); background:var(--surface); border-radius:.85rem; }
+  .kpi{ padding:1.15rem; display:block; text-decoration:none; transition:border-color .15s; }
+  .kpi.linkable:hover{ border-color:var(--accent); cursor:pointer; }
+  .kpi .label{ font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-faint); }
+  .kpi .value-row{ margin-top:.45rem; display:flex; align-items:flex-end; justify-content:space-between; gap:.6rem; }
+  .kpi .value{ font-size:1.85rem; font-weight:700; color:#fff; }
+  .kpi .foot{ margin-top:.7rem; display:flex; align-items:center; gap:.4rem; font-size:.75rem; font-weight:500; }
+  .dot{ width:6px; height:6px; border-radius:999px; flex:none; }
+  .tone-good{ color:var(--good); } .dot.tone-good{ background:var(--good); }
+  .tone-warn{ color:var(--warn); } .dot.tone-warn{ background:var(--warn); }
+  .tone-bad{ color:var(--bad); } .dot.tone-bad{ background:var(--bad-strong); }
+  .tone-neutral{ color:var(--ink-faint); } .dot.tone-neutral{ background:#475569; }
+
+  .detail-grid{ margin-top:1.5rem; display:grid; grid-template-columns:2fr 1fr; gap:1.5rem; align-items:start; }
+  @media (max-width:960px){ .detail-grid{ grid-template-columns:1fr; } }
+  .col{ display:flex; flex-direction:column; gap:1.5rem; }
+
+  .panel-head{ display:flex; align-items:center; justify-content:space-between; gap:.75rem; border-bottom:1px solid var(--border); padding:.85rem 1.15rem; }
+  .panel-head h2{ font-size:.85rem; font-weight:600; color:#fff; display:flex; align-items:center; gap:.45rem; }
+  .panel-head .count{ background:var(--surface-2); border-radius:999px; padding:.1rem .5rem; font-size:.72rem; font-weight:500; color:#cbd5e1; }
+  .panel-head .link{ font-size:.72rem; font-weight:600; color:var(--accent); background:none; border:0; cursor:pointer; text-decoration:none; }
+  .panel-head .link:hover{ color:var(--accent-2); }
+  .panel-body{ padding:1rem; }
+
+  .insight{ display:flex; gap:.75rem; align-items:flex-start; padding:.9rem; border:1px solid var(--border); border-radius:.75rem; background:var(--surface); }
+  .insight+.insight{ margin-top:.65rem; }
+  .badge-sev{ width:1.65rem; height:1.65rem; border-radius:999px; display:flex; align-items:center; justify-content:center; flex:none; border:1px solid; margin-top:.1rem; }
+  .badge-sev.CRITICAL{ background:rgba(248,113,113,.15); color:var(--bad); border-color:rgba(248,113,113,.3); }
+  .badge-sev.WARNING{ background:rgba(251,191,36,.15); color:var(--warn); border-color:rgba(251,191,36,.3); }
+  .badge-sev.INFO{ background:rgba(55,138,221,.15); color:var(--accent); border-color:rgba(55,138,221,.3); }
+  .insight .body{ min-width:0; flex:1; }
+  .insight .row1{ display:flex; align-items:flex-start; justify-content:space-between; gap:.5rem; }
+  .insight h3{ font-size:.875rem; font-weight:500; color:#fff; }
+  .insight p.desc{ margin:.25rem 0 0; font-size:.8rem; color:var(--ink-dim); line-height:1.45; }
+  .insight p.meta{ margin:.5rem 0 0; font-size:.72rem; color:var(--ink-faint); }
+  .icon-x{ background:none; border:0; color:var(--ink-faint); cursor:pointer; border-radius:.4rem; padding:.25rem; flex:none; }
+  .icon-x:hover{ background:var(--surface-2); color:#e2e8f0; }
+  .empty{ display:flex; flex-direction:column; align-items:center; gap:.5rem; padding:2.2rem 1rem; text-align:center; }
+  .empty p.title{ font-size:.875rem; color:#e2e8f0; }
+  .empty p.sub{ font-size:.75rem; color:var(--ink-faint); max-width:22rem; }
+
+  .list-row{ display:flex; align-items:center; gap:.75rem; padding:.75rem 1.15rem; border-top:1px solid var(--border); text-decoration:none; }
+  .list-row:first-child{ border-top:0; }
+  .list-row .icon-slot{ color:var(--ink-faint); flex:none; }
+  .list-row .main{ min-width:0; flex:1; }
+  .list-row .main p.t{ font-size:.875rem; font-weight:500; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .list-row .main p.s{ font-size:.72rem; color:var(--ink-faint); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:.1rem; }
+  .list-row .trail{ flex:none; font-size:.72rem; }
+  a.list-row:hover{ background:rgba(17,33,63,.5); cursor:pointer; }
+
+  .q-row{ padding:.75rem 1.15rem; border-top:1px solid var(--border); }
+  .q-row:first-child{ border-top:0; }
+  .q-row p.q{ font-size:.85rem; color:#dbe4f3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .q-row p.m{ margin-top:.35rem; font-size:.72rem; color:var(--ink-faint); }
+
+  .chart-card .panel-body{ padding:1.15rem; }
+  .chart-toggle{ background:none; border:0; color:var(--ink-faint); cursor:pointer; border-radius:.4rem; padding:.3rem; display:flex; }
+  .chart-toggle:hover{ background:var(--surface-2); color:#e2e8f0; }
+  .chart-wrap{ position:relative; }
+  .chart-tip{
+    position:absolute; transform:translate(-50%,-115%); background:var(--bg-raised); border:1px solid var(--border);
+    border-radius:.6rem; padding:.4rem .6rem; font-size:.72rem; white-space:nowrap; box-shadow:0 8px 20px rgba(0,0,0,.35);
+    pointer-events:none;
+  }
+  .chart-tip .n{ font-weight:700; color:#fff; font-variant-numeric:tabular-nums; }
+  .chart-tip .d{ color:var(--ink-faint); margin-top:.1rem; }
+  table.data{ width:100%; border-collapse:collapse; font-size:.8rem; }
+  table.data thead th{ text-align:left; color:var(--ink-faint); font-weight:500; padding:.4rem .3rem; position:sticky; top:0; background:var(--surface); }
+  table.data thead th.r{ text-align:right; }
+  table.data td{ padding:.5rem .3rem; border-top:1px solid var(--border); color:#dbe4f3; }
+  table.data td.r{ text-align:right; font-variant-numeric:tabular-nums; }
+
+  /* ---------- data sources / dashboards grids ---------- */
+  .grid-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-top:2rem; }
+  @media (max-width:920px){ .grid-3{ grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:600px){ .grid-3{ grid-template-columns:1fr;} }
+
+  .source-card{ padding:1.1rem; }
+  .source-card .top{ display:flex; align-items:flex-start; justify-content:space-between; gap:.5rem; }
+  .source-card .name{ display:flex; align-items:center; gap:.55rem; min-width:0; }
+  .source-card .name p{ font-weight:600; color:#fff; font-size:.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .status-pill{ display:inline-flex; align-items:center; gap:.35rem; border-radius:999px; padding:.2rem .55rem; font-size:.68rem; font-weight:600; flex:none; }
+  .status-pill.CONNECTED{ background:rgba(151,196,89,.15); color:var(--good); }
+  .status-pill.PENDING{ background:rgba(251,191,36,.15); color:var(--warn); }
+  .status-pill.ERROR{ background:rgba(248,113,113,.15); color:var(--bad); }
+  .source-card .meta{ margin-top:.6rem; font-size:.78rem; color:var(--ink-dim); }
+  .source-card .foot{ margin-top:.9rem; display:flex; align-items:center; justify-content:space-between; gap:.5rem; }
+  .link-btn{ background:none; border:0; color:var(--accent); font-size:.75rem; font-weight:600; cursor:pointer; padding:0; }
+  .link-btn:hover{ color:var(--accent-2); }
+  .preview-table{ margin-top:.75rem; border-top:1px dashed var(--border); padding-top:.65rem; }
+
+  .dash-card{ padding:1.15rem; text-decoration:none; display:block; transition:border-color .15s; cursor:pointer; }
+  .dash-card:hover{ border-color:var(--accent); }
+  .dash-card h3{ font-weight:600; color:#fff; font-size:.95rem; }
+  .dash-card p.d{ margin-top:.3rem; font-size:.8rem; color:var(--ink-dim); }
+  .dash-card p.m{ margin-top:.7rem; font-size:.72rem; color:var(--ink-faint); }
+
+  .empty-block{ margin-top:2rem; border:1px dashed var(--border); border-radius:.85rem; padding:3rem 1rem; display:flex; flex-direction:column; align-items:center; gap:.6rem; text-align:center; }
+  .empty-block p{ color:var(--ink-dim); max-width:26rem; font-size:.9rem; }
+
+  /* ---------- ask ai ---------- */
+  .ask-head{ display:flex; align-items:center; gap:.55rem; }
+  .ask-head h1{ font-size:1.5rem; font-weight:700; color:#fff; }
+  .field{ margin-top:1.35rem; }
+  .field label{ display:block; margin-bottom:.4rem; font-size:.85rem; font-weight:500; color:#cbd5e1; }
+  select, textarea{
+    width:100%; border:1px solid var(--border); background:var(--surface); color:#fff; border-radius:.6rem;
+    padding:.65rem .85rem; font-size:.85rem; font-family:inherit; resize:vertical;
+  }
+  select:focus, textarea:focus{ outline:2px solid rgba(55,138,221,.5); outline-offset:1px; border-color:var(--accent); }
+  textarea::placeholder{ color:var(--ink-faint); }
+  .chips{ margin-top:.6rem; display:flex; flex-wrap:wrap; gap:.5rem; }
+  .chip{ border:1px solid var(--border); background:none; color:var(--ink-dim); border-radius:999px; padding:.3rem .7rem; font-size:.72rem; cursor:pointer; }
+  .chip:hover{ border-color:var(--accent); color:#e2e8f0; }
+  .ask-result{ margin-top:2.2rem; display:flex; flex-direction:column; gap:1rem; }
+  .sql-card{ padding:1.15rem; }
+  .sql-card .row{ display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; }
+  .sql-card h3{ font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--ink-faint); }
+  pre.sql{ margin:.55rem 0 0; background:var(--surface-2); border-radius:.6rem; padding:.75rem .9rem; font-family:var(--font-mono); font-size:.8rem; color:var(--good); overflow-x:auto; white-space:pre; }
+  .sql-card p.explain{ margin:.7rem 0 0; font-size:.85rem; color:#dbe4f3; line-height:1.5; }
+  .thinking{ display:flex; align-items:center; gap:.6rem; padding:1.1rem 1.15rem; color:var(--ink-dim); font-size:.85rem; }
+  .spinner{ width:14px; height:14px; border-radius:999px; border:2px solid var(--border); border-top-color:var(--accent); animation:spin .7s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce){ .spinner{ animation-duration:1.6s; } }
+  .bar-card{ padding:1.1rem; }
+  .table-card{ border:1px solid var(--border); border-radius:.85rem; overflow:auto; }
+  .table-card table.data{ min-width:100%; }
+  .table-card thead{ background:var(--surface-2); }
+  .table-card td, .table-card th{ padding:.55rem .9rem; white-space:nowrap; }
+  .table-card tbody tr{ background:var(--surface); }
+
+  /* ---------- admin ---------- */
+  .team-table{ margin-top:1.5rem; border:1px solid var(--border); border-radius:.85rem; overflow:hidden; }
+  .team-table table{ width:100%; border-collapse:collapse; font-size:.85rem; }
+  .team-table thead{ background:var(--surface-2); }
+  .team-table th{ text-align:left; padding:.65rem 1.1rem; color:var(--ink-faint); font-weight:500; font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; }
+  .team-table td{ padding:.75rem 1.1rem; border-top:1px solid var(--border); color:#dbe4f3; }
+  .team-table tbody tr:hover{ background:rgba(17,33,63,.4); }
+
+  /* ---------- toasts ---------- */
+  #toasts{ position:fixed; right:1rem; bottom:1rem; display:flex; flex-direction:column-reverse; gap:.5rem; z-index:100; }
+  .toast{
+    background:var(--bg-raised); border:1px solid var(--border-strong); color:#fff; font-size:.82rem;
+    padding:.7rem 1rem; border-radius:.65rem; box-shadow:0 12px 30px rgba(0,0,0,.4); max-width:22rem;
+    animation:toast-in .18s ease-out;
+  }
+  .toast.error{ border-color:rgba(248,113,113,.5); }
+  .toast.success{ border-color:rgba(151,196,89,.4); }
+  @keyframes toast-in{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }
+
+  svg.icon{ display:block; flex:none; }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <div class="demo-strip" id="demoStrip">
+    <span><strong>Live demo</strong> — every number on this page is sample data, nothing you do here is saved.</span>
+    <a href="https://github.com/dubemjesse/InsightIq" target="_blank" rel="noopener">View the source →</a>
+    <button id="dismissStrip" aria-label="Dismiss">×</button>
+  </div>
+
+  <header class="nav">
+    <div class="nav-row">
+      <div class="nav-left">
+        <button class="brand" data-tab="overview" aria-label="InsightIQ home">
+          <svg width="28" height="28" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M24 3L42.4 13.5V34.5L24 45L5.6 34.5V13.5L24 3Z" fill="#03122A" stroke="#378ADD" stroke-width="2"/>
+            <circle cx="24" cy="24" r="4" fill="#97C459"/>
+            <circle cx="24" cy="12" r="2.5" fill="#378ADD"/>
+            <circle cx="34.5" cy="30" r="2.5" fill="#378ADD"/>
+            <circle cx="13.5" cy="30" r="2.5" fill="#378ADD"/>
+            <path d="M24 16V20M20.5 26L15.5 28.5M27.5 26L32.5 28.5" stroke="#378ADD" stroke-width="1.5"/>
+          </svg>
+          <span>Insight<b>IQ</b></span>
+        </button>
+        <nav class="tabs">
+          <button class="tab-link active" data-tab="overview">Dashboard</button>
+          <button class="tab-link" data-tab="sources">Data Sources</button>
+          <button class="tab-link" data-tab="ask">Ask AI</button>
+          <button class="tab-link" data-tab="dashboards">Dashboards</button>
+          <button class="tab-link" data-tab="admin" id="adminTabLink" hidden>Admin</button>
+        </nav>
+      </div>
+      <div class="nav-right">
+        <div class="role-group" role="group" aria-label="Preview as role">
+          <button class="role-btn active" data-role="ADMIN">ADMIN</button>
+          <button class="role-btn" data-role="ANALYST">ANALYST</button>
+          <button class="role-btn" data-role="VIEWER">VIEWER</button>
+        </div>
+        <span class="user-name">Alex Chen</span>
+        <button class="btn-ghost" id="logoutBtn">Log out</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ===================== OVERVIEW ===================== -->
+    <section class="container w-6" id="tab-overview">
+      <div class="page-head">
+        <div>
+          <h1 id="greeting">Good afternoon, Alex</h1>
+          <p class="sub" id="dateLine">Sunday, September 13 · signed in as <b id="roleLine">ADMIN</b></p>
+        </div>
+        <div class="head-actions">
+          <button class="btn-ghost" id="scanBtn">
+            <svg class="icon" id="scanIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 4v5h-5"/></svg>
+            Scan for insights
+          </button>
+          <button class="btn-primary" data-tab="ask">
+            <svg class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M12 8v4M9 10h6"/></svg>
+            Ask a question
+          </button>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <button class="card kpi linkable" data-tab="sources" style="text-align:left">
+          <p class="label">Data sources</p>
+          <div class="value-row"><span class="value tabular">4</span></div>
+          <p class="foot tone-bad"><span class="dot tone-bad"></span>1 needs attention</p>
+        </button>
+        <div class="card kpi">
+          <p class="label">Open insights</p>
+          <div class="value-row"><span class="value tabular">6</span></div>
+          <p class="foot tone-bad"><span class="dot tone-bad"></span>1 critical · 2 warning</p>
+        </div>
+        <div class="card kpi">
+          <p class="label">Questions this week</p>
+          <div class="value-row">
+            <span class="value tabular">43</span>
+            <span id="sparkSlot"></span>
+          </div>
+          <p class="foot tone-good"><span class="dot tone-good"></span>43% above last week</p>
+        </div>
+        <button class="card kpi linkable" data-tab="dashboards" style="text-align:left">
+          <p class="label">Dashboards</p>
+          <div class="value-row"><span class="value tabular">3</span></div>
+          <p class="foot tone-neutral"><span class="dot tone-neutral"></span>9 widgets saved</p>
+        </button>
+      </div>
+
+      <div class="detail-grid">
+        <div class="col">
+          <section class="card">
+            <div class="panel-head">
+              <h2>
+                <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+                Needs your attention
+                <span class="count" id="attnCount">6</span>
+              </h2>
+              <span class="tone-bad" style="font-size:.72rem;font-weight:600" id="attnCritical">1 critical</span>
+            </div>
+            <div class="panel-body" id="attnBody"><!-- insight cards injected --></div>
+          </section>
+
+          <section class="card chart-card">
+            <div class="panel-head">
+              <h2>
+                <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#378add" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 17 6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg>
+                Query activity <span style="color:var(--ink-faint);font-weight:400">· last 14 days</span>
+              </h2>
+              <div style="display:flex;align-items:center;gap:.75rem">
+                <span style="font-size:.75rem;color:var(--ink-dim)"><span style="font-weight:700;color:#fff" class="tabular">73</span> asked</span>
+                <button class="chart-toggle" id="tableToggle" aria-pressed="false" aria-label="Show data table">
+                  <svg class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3z"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="chart-wrap" id="chartWrap"></div>
+              <div id="tableView" hidden></div>
+            </div>
+          </section>
+        </div>
+
+        <div class="col">
+          <section class="card">
+            <div class="panel-head"><h2>Data source health</h2><button class="link" data-tab="sources">Manage</button></div>
+            <div id="sourceHealth"></div>
+          </section>
+
+          <section class="card">
+            <div class="panel-head"><h2>Recent questions</h2><button class="link" data-tab="ask">Ask</button></div>
+            <div id="recentQuestions"></div>
+          </section>
+
+          <section class="card">
+            <div class="panel-head"><h2>Your dashboards</h2><button class="link" data-tab="dashboards">All</button></div>
+            <div id="dashList"></div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== DATA SOURCES ===================== -->
+    <section class="container w-5" id="tab-sources" hidden>
+      <div class="page-head">
+        <div>
+          <h1>Data sources</h1>
+          <p class="sub">Connect a live database or import a file to start asking questions about your data.</p>
+        </div>
+        <div class="head-actions" id="sourceActions">
+          <button class="btn-ghost" data-toast="This is a live demo — uploading files is disabled here.">
+            <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.9A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.24"/><path d="M12 12v9M9 15l3-3 3 3"/></svg>
+            Upload file
+          </button>
+          <button class="btn-primary" data-toast="This is a live demo — connecting new sources is disabled here.">
+            <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            Connect database
+          </button>
+        </div>
+      </div>
+      <div class="grid-3" id="sourceGrid"></div>
+    </section>
+
+    <!-- ===================== ASK AI ===================== -->
+    <section class="container w-4" id="tab-ask" hidden>
+      <div class="ask-head">
+        <svg class="icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#378add" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 4.4L6 9l4.1 1.6L12 15l1.9-4.4L18 9l-4.1-1.6z"/><path d="M5 3v4M3 5h4M19 17v4M17 19h4"/></svg>
+        <h1>Ask your data</h1>
+      </div>
+      <p class="sub">Ask a plain-English question and InsightIQ will write and run the SQL for you.</p>
+
+      <form id="askForm">
+        <div class="field">
+          <label for="dsSelect">Data source</label>
+          <select id="dsSelect">
+            <option value="">Select a data source</option>
+            <option value="pg">Production Postgres (POSTGRES)</option>
+            <option value="csv">Sales CSV Import (CSV)</option>
+            <option value="my">Marketing MySQL (MYSQL)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="qInput">Your question</label>
+          <textarea id="qInput" rows="3" placeholder="e.g. What were the top 5 products by revenue last quarter?"></textarea>
+          <div class="chips">
+            <button type="button" class="chip" data-q="0">What were the top 5 products by revenue?</button>
+            <button type="button" class="chip" data-q="1">Show total revenue by region</button>
+            <button type="button" class="chip" data-q="2">How many rows are in this dataset?</button>
+          </div>
+        </div>
+        <button type="submit" class="btn-primary" style="margin-top:1.35rem" id="askSubmit">Ask</button>
+      </form>
+
+      <div id="askResult"></div>
+    </section>
+
+    <!-- ===================== DASHBOARDS ===================== -->
+    <section class="container w-5" id="tab-dashboards" hidden>
+      <div class="page-head">
+        <div>
+          <h1>Dashboards</h1>
+          <p class="sub">Save charts from your questions into shareable, drag-and-drop dashboards.</p>
+        </div>
+        <button class="btn-primary" id="newDashBtn" data-toast="This is a live demo — creating dashboards is disabled here.">
+          <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          New dashboard
+        </button>
+      </div>
+      <div class="grid-3" id="dashGrid"></div>
+    </section>
+
+    <!-- ===================== ADMIN ===================== -->
+    <section class="container w-5" id="tab-admin" hidden>
+      <div class="page-head">
+        <div>
+          <h1>Team</h1>
+          <p class="sub">Manage who can connect data sources, run scans, and build dashboards.</p>
+        </div>
+        <button class="btn-primary" data-toast="This is a live demo — invites are disabled here.">
+          <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
+          Invite teammate
+        </button>
+      </div>
+      <div class="team-table">
+        <table>
+          <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th></tr></thead>
+          <tbody id="teamBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site">
+    © 2026 Jesse Odoh. All rights reserved.
+    <span class="sep">·</span>
+    <a href="https://github.com/dubemjesse/InsightIq" target="_blank" rel="noopener">Source on GitHub ↗</a>
+  </footer>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- state ---------------- */
+  var state = { role: 'ADMIN' };
+
+  /* ---------------- toasts ---------------- */
+  function toast(msg, type){
+    var el = document.createElement('div');
+    el.className = 'toast' + (type ? ' ' + type : '');
+    el.textContent = msg;
+    var host = document.getElementById('toasts');
+    host.appendChild(el);
+    setTimeout(function(){
+      el.style.transition = 'opacity .2s'; el.style.opacity = '0';
+      setTimeout(function(){ el.remove(); }, 200);
+    }, 3400);
+  }
+  document.body.addEventListener('click', function(e){
+    var t = e.target.closest('[data-toast]');
+    if (t) toast(t.getAttribute('data-toast'));
+  });
+
+  /* ---------------- demo strip ---------------- */
+  var strip = document.getElementById('demoStrip');
+  try {
+    if (localStorage.getItem('iiq_strip_dismissed') === '1') strip.hidden = true;
+  } catch(e){}
+  document.getElementById('dismissStrip').addEventListener('click', function(){
+    strip.hidden = true;
+    try { localStorage.setItem('iiq_strip_dismissed', '1'); } catch(e){}
+  });
+
+  /* ---------------- tabs ---------------- */
+  var TABS = ['overview','sources','ask','dashboards','admin'];
+  function showTab(name){
+    if (name === 'admin' && state.role !== 'ADMIN') name = 'overview';
+    TABS.forEach(function(t){
+      document.getElementById('tab-' + t).hidden = (t !== name);
+    });
+    document.querySelectorAll('.tab-link').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-tab') === name);
+    });
+    window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+  }
+  document.body.addEventListener('click', function(e){
+    var t = e.target.closest('[data-tab]');
+    if (t) showTab(t.getAttribute('data-tab'));
+  });
+
+  /* ---------------- role switch ---------------- */
+  function applyRole(role){
+    state.role = role;
+    document.querySelectorAll('.role-btn').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-role') === role);
+    });
+    document.getElementById('roleLine').textContent = role;
+    var canManage = role === 'ADMIN' || role === 'ANALYST';
+    document.getElementById('scanBtn').hidden = !canManage;
+    document.getElementById('sourceActions').hidden = !canManage;
+    document.getElementById('newDashBtn').hidden = !canManage;
+    var adminLink = document.getElementById('adminTabLink');
+    adminLink.hidden = role !== 'ADMIN';
+    if (role !== 'ADMIN' && !document.getElementById('tab-admin').hidden) showTab('overview');
+  }
+  document.querySelectorAll('.role-btn').forEach(function(b){
+    b.addEventListener('click', function(){ applyRole(b.getAttribute('data-role')); });
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', function(){
+    toast('This is a live demo — logging out is disabled here.');
+  });
+  document.getElementById('scanBtn').addEventListener('click', function(){
+    var icon = document.getElementById('scanIcon');
+    var btn = document.getElementById('scanBtn');
+    if (btn.disabled) return;
+    btn.disabled = true;
+    icon.style.animation = 'spin .7s linear infinite';
+    setTimeout(function(){
+      icon.style.animation = '';
+      btn.disabled = false;
+      toast('No new insights found.', 'success');
+    }, 900);
+  });
+
+  /* ---------------- data ---------------- */
+  var SOURCES = [
+    { id:'pg', name:'Production Postgres', type:'PostgreSQL', tables:8, status:'CONNECTED', last:'2h ago',
+      sample:{ cols:['id','order_date','region','revenue'], rows:[['10482','2026-09-12','North America','1,204.00'],['10483','2026-09-12','APAC','88.50'],['10484','2026-09-11','EMEA','642.10']] } },
+    { id:'csv', name:'Sales CSV Import', type:'CSV', tables:0, status:'CONNECTED', last:'1d ago',
+      sample:{ cols:['customer_email','signup_at','plan'], rows:[['j.diaz@rincon.co','2026-08-02','Pro'],['j.diaz@rincon.co','2026-08-02','Pro'],['m.chan@lattice.io','2026-08-04','Team']] } },
+    { id:'my', name:'Marketing MySQL', type:'MySQL', tables:5, status:'PENDING', last:null,
+      sample:{ cols:['campaign','clicks','spend'], rows:[['Fall Launch','12,904','2,140.00'],['Retarget — APAC','3,110','610.00'],['Referral Push','8,022','0.00']] } },
+    { id:'xl', name:'Q3 Expenses.xlsx', type:'Excel', tables:0, status:'ERROR', last:null,
+      sample:null },
+  ];
+
+  var INSIGHTS = [
+    { id:1, severity:'CRITICAL', title:'Revenue dropped 34% in APAC region', desc:'Daily revenue for APAC fell sharply starting Sep 10, driven by a stalled checkout funnel in the mobile app.', source:'Production Postgres', time:'2h ago' },
+    { id:2, severity:'WARNING', title:'Churn rate trending up in SMB segment', desc:'SMB monthly churn rose from 3.1% to 4.6% over the last two billing cycles.', source:'Production Postgres', time:'6h ago' },
+    { id:3, severity:'WARNING', title:'Duplicate customer records detected', desc:'142 rows in customers share the same email domain and signup timestamp — likely a duplicate import.', source:'Sales CSV Import', time:'1d ago' },
+    { id:4, severity:'INFO', title:'New table detected: refunds_2026', desc:'A new table appeared in Production Postgres since the last scan. Consider reviewing its schema.', source:'Production Postgres', time:'3d ago' },
+  ];
+  var insightsTotal = 6, insightsCritical = 1;
+
+  var QUESTIONS = [
+    { q:'What were the top 5 products by revenue last quarter?', source:'Production Postgres', rows:5, time:'12m ago' },
+    { q:'Show total revenue by region for September', source:'Production Postgres', rows:4, time:'2h ago' },
+    { q:'How many duplicate customer emails are there?', source:'Sales CSV Import', rows:1, time:'1d ago' },
+  ];
+
+  var DASHBOARDS = [
+    { id:1, name:'Executive Summary', desc:'Revenue, churn, and pipeline at a glance.', widgets:4, updated:'Sep 12, 2026' },
+    { id:2, name:'Sales Pipeline', desc:'Deal stages and rep performance.', widgets:3, updated:'Sep 10, 2026' },
+    { id:3, name:'Marketing Funnel', desc:'Campaign spend vs. conversions.', widgets:2, updated:'Sep 8, 2026' },
+  ];
+
+  var TEAM = [
+    { name:'Alex Chen', email:'alex@insightiq.app', role:'ADMIN', joined:'Jan 14, 2026' },
+    { name:'Priya Nandakumar', email:'priya@insightiq.app', role:'ANALYST', joined:'Feb 2, 2026' },
+    { name:'Marcus Webb', email:'marcus@insightiq.app', role:'ANALYST', joined:'Mar 19, 2026' },
+    { name:'Sam Okafor', email:'sam@insightiq.app', role:'VIEWER', joined:'Jun 30, 2026' },
+  ];
+
+  var DAILY = [
+    { date:'2026-08-31', count:3 }, { date:'2026-09-01', count:4 }, { date:'2026-09-02', count:5 },
+    { date:'2026-09-03', count:3 }, { date:'2026-09-04', count:6 }, { date:'2026-09-05', count:4 },
+    { date:'2026-09-06', count:5 }, { date:'2026-09-07', count:6 }, { date:'2026-09-08', count:5 },
+    { date:'2026-09-09', count:7 }, { date:'2026-09-10', count:4 }, { date:'2026-09-11', count:8 },
+    { date:'2026-09-12', count:6 }, { date:'2026-09-13', count:7 }
+  ];
+
+  function shortDate(key){
+    return new Date(key + 'T12:00:00').toLocaleDateString(undefined, { month:'short', day:'numeric' });
+  }
+
+  var SEV_ICON = {
+    CRITICAL: '<svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></svg>',
+    WARNING: '<svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>',
+    INFO: '<svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>'
+  };
+
+  /* ---------------- render: insights ---------------- */
+  function renderInsights(){
+    var body = document.getElementById('attnBody');
+    var count = document.getElementById('attnCount');
+    var critEl = document.getElementById('attnCritical');
+    count.textContent = insightsTotal;
+    if (insightsCritical > 0) { critEl.hidden = false; critEl.textContent = insightsCritical + ' critical'; }
+    else critEl.hidden = true;
+
+    if (INSIGHTS.length === 0){
+      body.innerHTML = '<div class="empty">' +
+        '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#97c459" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>' +
+        '<p class="title">Everything looks healthy</p>' +
+        '<p class="sub">No anomalies right now. Run a scan any time to re-check your data.</p></div>';
+      return;
+    }
+    body.innerHTML = INSIGHTS.slice(0,4).map(function(i){
+      return '<div class="insight" data-id="' + i.id + '">' +
+        '<span class="badge-sev ' + i.severity + '">' + SEV_ICON[i.severity] + '</span>' +
+        '<div class="body">' +
+          '<div class="row1"><h3>' + i.title + '</h3>' +
+          '<button class="icon-x" aria-label="Dismiss insight" data-dismiss="' + i.id + '">' +
+            '<svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>' +
+          '</button></div>' +
+          '<p class="desc">' + i.desc + '</p>' +
+          '<p class="meta">' + i.source + ' · ' + i.time + '</p>' +
+        '</div></div>';
+    }).join('');
+  }
+  document.getElementById('attnBody').addEventListener('click', function(e){
+    var b = e.target.closest('[data-dismiss]');
+    if (!b) return;
+    var id = Number(b.getAttribute('data-dismiss'));
+    var idx = INSIGHTS.findIndex(function(i){ return i.id === id; });
+    if (idx === -1) return;
+    var wasCritical = INSIGHTS[idx].severity === 'CRITICAL';
+    INSIGHTS.splice(idx, 1);
+    insightsTotal = Math.max(0, insightsTotal - 1);
+    if (wasCritical) insightsCritical = Math.max(0, insightsCritical - 1);
+    renderInsights();
+  });
+
+  /* ---------------- render: source health + data sources tab ---------------- */
+  var STATUS_LABEL = { CONNECTED:'Connected', PENDING:'Pending', ERROR:'Error' };
+
+  function renderSourceHealth(){
+    var host = document.getElementById('sourceHealth');
+    host.innerHTML = SOURCES.map(function(s){
+      var trail = s.status === 'ERROR' ? 'Error' : (s.last || STATUS_LABEL[s.status]);
+      var trailClass = s.status === 'ERROR' ? 'tone-bad' : (s.status === 'PENDING' ? 'tone-warn' : 'tone-neutral');
+      var isFile = s.type === 'CSV' || s.type === 'Excel';
+      return '<div class="list-row">' +
+        '<span class="dot ' + (s.status==='CONNECTED'?'tone-good':s.status==='PENDING'?'tone-warn':'tone-bad') + '"></span>' +
+        '<span class="icon-slot">' + (isFile ?
+          '<svg class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h2M8 17h2M14 13h2M14 17h2"/></svg>'
+          : '<svg class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>') +
+        '</span>' +
+        '<div class="main"><p class="t">' + s.name + '</p><p class="s">' + s.type + (s.tables ? ' · ' + s.tables + ' tables' : '') + '</p></div>' +
+        '<span class="trail ' + trailClass + '">' + trail + '</span>' +
+      '</div>';
+    }).join('');
+  }
+
+  function renderSourceGrid(){
+    var grid = document.getElementById('sourceGrid');
+    grid.innerHTML = SOURCES.map(function(s){
+      var isFile = s.type === 'CSV' || s.type === 'Excel';
+      var previewBtn = s.sample ? '<button class="link-btn" data-preview="' + s.id + '">Preview data</button>' : '<span style="font-size:.75rem;color:var(--ink-faint)">Unavailable</span>';
+      return '<div class="card source-card">' +
+        '<div class="top"><div class="name">' +
+          (isFile ? '<svg class="icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#93a1b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>'
+                  : '<svg class="icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#93a1b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>') +
+          '<p>' + s.name + '</p></div>' +
+          '<span class="status-pill ' + s.status + '">' + STATUS_LABEL[s.status] + '</span>' +
+        '</div>' +
+        '<p class="meta">' + s.type + (s.tables ? ' · ' + s.tables + ' tables' : '') + (s.last ? ' · synced ' + s.last : '') + '</p>' +
+        '<div class="foot">' + previewBtn + '<button class="link-btn" data-toast="This is a live demo — editing sources is disabled here.">Manage</button></div>' +
+        '<div class="preview-table" hidden id="preview-' + s.id + '"></div>' +
+      '</div>';
+    }).join('');
+  }
+  document.getElementById('sourceGrid').addEventListener('click', function(e){
+    var b = e.target.closest('[data-preview]');
+    if (!b) return;
+    var id = b.getAttribute('data-preview');
+    var src = SOURCES.find(function(s){ return s.id === id; });
+    var host = document.getElementById('preview-' + id);
+    var open = !host.hidden;
+    if (open){ host.hidden = true; b.textContent = 'Preview data'; return; }
+    host.hidden = false; b.textContent = 'Hide preview';
+    host.innerHTML = '<table class="data"><thead><tr>' + src.sample.cols.map(function(c){ return '<th>' + c + '</th>'; }).join('') +
+      '</tr></thead><tbody>' + src.sample.rows.map(function(r){ return '<tr>' + r.map(function(v){ return '<td>' + v + '</td>'; }).join('') + '</tr>'; }).join('') +
+      '</tbody></table>';
+  });
+
+  /* ---------------- render: recent questions + dashboards ---------------- */
+  function renderRecentQuestions(){
+    document.getElementById('recentQuestions').innerHTML = QUESTIONS.map(function(q){
+      return '<div class="q-row"><p class="q">' + q.q + '</p>' +
+        '<p class="m">' + q.source + ' · ' + q.rows + ' row' + (q.rows===1?'':'s') + ' · ' + q.time + '</p></div>';
+    }).join('');
+  }
+
+  function dashboardIcon(){
+    return '<svg class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>';
+  }
+
+  function renderDashList(){
+    document.getElementById('dashList').innerHTML = DASHBOARDS.map(function(d){
+      return '<a class="list-row" href="javascript:void(0)" data-toast="This preview does not include the dashboard viewer.">' +
+        '<span class="icon-slot">' + dashboardIcon() + '</span>' +
+        '<div class="main"><p class="t">' + d.name + '</p><p class="s">' + d.widgets + ' widget' + (d.widgets===1?'':'s') + '</p></div>' +
+      '</a>';
+    }).join('');
+  }
+
+  function renderDashGrid(){
+    document.getElementById('dashGrid').innerHTML = DASHBOARDS.map(function(d){
+      return '<div class="card dash-card" data-toast="This preview does not include the dashboard viewer.">' +
+        '<h3>' + d.name + '</h3><p class="d">' + d.desc + '</p>' +
+        '<p class="m">' + d.widgets + ' widget' + (d.widgets===1?'':'s') + ' · updated ' + d.updated + '</p></div>';
+    }).join('');
+  }
+
+  function renderTeam(){
+    document.getElementById('teamBody').innerHTML = TEAM.map(function(m){
+      return '<tr><td>' + m.name + '</td><td>' + m.email + '</td><td><span class="role-pill ' + m.role + '">' + m.role + '</span></td><td>' + m.joined + '</td></tr>';
+    }).join('');
+  }
+
+  /* ---------------- sparkline (kpi) ---------------- */
+  function sparklinePath(data, w, h, pad){
+    var max = Math.max.apply(null, data), min = Math.min.apply(null, data);
+    var range = (max - min) || 1;
+    var step = (w - pad*2) / (data.length - 1);
+    var pts = data.map(function(v, i){
+      return [pad + i*step, pad + (h - pad*2) * (1 - (v - min)/range)];
+    });
+    var d = pts.map(function(p,i){ return (i===0?'M':'L') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(' ');
+    return { d: d, end: pts[pts.length-1] };
+  }
+  (function renderKpiSpark(){
+    var data = DAILY.slice(7).map(function(d){ return d.count; });
+    var w=96,h=36,pad=3;
+    var built = sparklinePath(data, w, h, pad);
+    document.getElementById('sparkSlot').innerHTML =
+      '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" fill="none">' +
+      '<path d="'+built.d+'" stroke="#378add" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<circle cx="'+built.end[0]+'" cy="'+built.end[1]+'" r="2" fill="#5aa3e8"/></svg>';
+  })();
+
+  /* ---------------- activity chart ---------------- */
+  var chartHover = null;
+  function buildChartModel(){
+    var W=720, H=240, PAD={top:16,right:16,bottom:28,left:34};
+    var counts = DAILY.map(function(d){ return d.count; });
+    var max = Math.max(4, Math.ceil(Math.max.apply(null, counts)/4)*4);
+    var innerW = W - PAD.left - PAD.right, innerH = H - PAD.top - PAD.bottom;
+    var step = innerW / (DAILY.length - 1);
+    function x(i){ return PAD.left + i*step; }
+    function y(v){ return PAD.top + innerH * (1 - v/max); }
+    var pts = DAILY.map(function(d,i){ return [x(i), y(d.count)]; });
+    var line = pts.map(function(p,i){ return (i===0?'M':'L') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(' ');
+    var baseline = PAD.top + innerH;
+    var area = line + ' L' + x(DAILY.length-1).toFixed(1) + ' ' + baseline + ' L' + x(0).toFixed(1) + ' ' + baseline + ' Z';
+    return { W:W, H:H, PAD:PAD, max:max, x:x, y:y, pts:pts, line:line, area:area, innerH:innerH, ticks:[0, max/2, max] };
+  }
+
+  function renderChart(){
+    var m = buildChartModel();
+    var xLabelIdx = [0, Math.floor(DAILY.length/2), DAILY.length-1];
+    var ticksSvg = m.ticks.map(function(t){
+      return '<g><line x1="'+m.PAD.left+'" x2="'+(m.W-m.PAD.right)+'" y1="'+m.y(t)+'" y2="'+m.y(t)+'" stroke="#1e304f" stroke-width="1"/>' +
+        '<text x="'+(m.PAD.left-8)+'" y="'+(m.y(t)+3)+'" text-anchor="end" style="font-size:10px;fill:#8a97ab">'+t+'</text></g>';
+    }).join('');
+    var xLabelsSvg = xLabelIdx.map(function(i){
+      return '<text x="'+m.x(i)+'" y="'+(m.H-8)+'" text-anchor="middle" style="font-size:10px;fill:#8a97ab">'+shortDate(DAILY[i].date)+'</text>';
+    }).join('');
+    var lastPt = m.pts[m.pts.length-1];
+    var hoverSvg = '';
+    if (chartHover != null){
+      var hp = m.pts[chartHover];
+      hoverSvg = '<line x1="'+hp[0]+'" x2="'+hp[0]+'" y1="'+m.PAD.top+'" y2="'+(m.PAD.top+m.innerH)+'" stroke="#5aa3e8" stroke-width="1" stroke-dasharray="3 3"/>' +
+        '<circle cx="'+hp[0]+'" cy="'+hp[1]+'" r="4" fill="#5aa3e8" stroke="#0c1930" stroke-width="2"/>';
+    }
+    var svg = '<svg id="activitySvg" viewBox="0 0 '+m.W+' '+m.H+'" style="width:100%;display:block" role="img" aria-label="Query activity over the last 14 days: 73 questions total">' +
+      '<defs><linearGradient id="af" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#378add" stop-opacity="0.22"/><stop offset="100%" stop-color="#378add" stop-opacity="0"/></linearGradient></defs>' +
+      ticksSvg +
+      '<path d="'+m.area+'" fill="url(#af)"/>' +
+      '<path d="'+m.line+'" fill="none" stroke="#378add" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>' +
+      '<circle cx="'+lastPt[0]+'" cy="'+lastPt[1]+'" r="3.5" fill="#5aa3e8" stroke="#0c1930" stroke-width="2"/>' +
+      xLabelsSvg + hoverSvg +
+      '</svg>';
+    var tip = '';
+    if (chartHover != null){
+      var hp2 = m.pts[chartHover];
+      var d = DAILY[chartHover];
+      tip = '<div class="chart-tip" style="left:'+(hp2[0]/m.W*100)+'%; top:'+(hp2[1]/m.H*100)+'%">' +
+        '<div class="n">'+d.count+' '+(d.count===1?'question':'questions')+'</div>' +
+        '<div class="d">'+shortDate(d.date)+'</div></div>';
+    }
+    document.getElementById('chartWrap').innerHTML = svg + tip;
+
+    var svgEl = document.getElementById('activitySvg');
+    svgEl.addEventListener('mousemove', function(ev){
+      var rect = svgEl.getBoundingClientRect();
+      var px = (ev.clientX - rect.left) / rect.width * m.W;
+      var i = Math.round((px - m.PAD.left) / ((m.W-m.PAD.left-m.PAD.right)/(DAILY.length-1)));
+      var next = (i >= 0 && i < DAILY.length) ? i : null;
+      if (next !== chartHover){ chartHover = next; renderChart(); }
+    });
+    svgEl.addEventListener('mouseleave', function(){ if (chartHover!=null){ chartHover=null; renderChart(); } });
+  }
+
+  function renderTable(){
+    document.getElementById('tableView').innerHTML =
+      '<div style="max-height:13rem;overflow:auto"><table class="data"><thead><tr><th>Date</th><th class="r">Questions</th></tr></thead><tbody>' +
+      DAILY.map(function(d){ return '<tr><td>'+shortDate(d.date)+'</td><td class="r tabular">'+d.count+'</td></tr>'; }).join('') +
+      '</tbody></table></div>';
+  }
+
+  document.getElementById('tableToggle').addEventListener('click', function(){
+    var showingTable = !document.getElementById('tableView').hidden;
+    var next = !showingTable;
+    document.getElementById('tableView').hidden = !next;
+    document.getElementById('chartWrap').hidden = next;
+    this.setAttribute('aria-pressed', String(next));
+    if (next) renderTable();
+  });
+
+  /* ---------------- ask ai flow ---------------- */
+  var ANSWERS = [
+    {
+      sql: 'SELECT product_name, SUM(revenue) AS total_revenue\nFROM sales\nGROUP BY product_name\nORDER BY total_revenue DESC\nLIMIT 5;',
+      explanation: 'Grouped orders by product, summed revenue for each, then kept the top 5 by total.',
+      cols: ['Product', 'Revenue'],
+      rows: [['Wireless Earbuds Pro','$128,430'],['Smart Home Hub','$96,210'],['Fitness Band SE','$81,940'],['4K Streaming Stick','$64,300'],['Portable SSD 1TB','$52,870']],
+      chart: { labels:['Earbuds Pro','Home Hub','Band SE','Stream Stick','SSD 1TB'], values:[128430,96210,81940,64300,52870] }
+    },
+    {
+      sql: "SELECT region, SUM(revenue) AS total_revenue\nFROM sales\nWHERE order_date >= date_trunc('month', current_date)\nGROUP BY region\nORDER BY total_revenue DESC;",
+      explanation: 'Summed this month’s revenue by region — APAC is well behind the others, consistent with the checkout-funnel issue flagged on the dashboard.',
+      cols: ['Region', 'Revenue'],
+      rows: [['North America','$214,900'],['EMEA','$168,340'],['LATAM','$74,120'],['APAC','$41,600']],
+      chart: { labels:['N. America','EMEA','LATAM','APAC'], values:[214900,168340,74120,41600] }
+    },
+    {
+      sql: 'SELECT COUNT(*) FROM sales;',
+      explanation: 'Counted every row in the sales table.',
+      cols: ['count'],
+      rows: [['84,213']],
+      chart: null
+    }
+  ];
+
+  function barChartSvg(labels, values){
+    var W=640, H=200, PAD={top:10,right:12,bottom:34,left:12};
+    var max = Math.max.apply(null, values);
+    var innerW = W-PAD.left-PAD.right, innerH = H-PAD.top-PAD.bottom;
+    var n = labels.length, gap = 18;
+    var bw = (innerW - gap*(n-1)) / n;
+    var bars = labels.map(function(l, i){
+      var v = values[i];
+      var bh = innerH * (v/max);
+      var x = PAD.left + i*(bw+gap);
+      var y = PAD.top + innerH - bh;
+      return '<g>' +
+        '<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+bh.toFixed(1)+'" rx="4" fill="#378add"/>' +
+        '<text x="'+(x+bw/2).toFixed(1)+'" y="'+(PAD.top+innerH+16)+'" text-anchor="middle" style="font-size:10px;fill:#8a97ab">'+l+'</text>' +
+        '<text x="'+(x+bw/2).toFixed(1)+'" y="'+(y-6).toFixed(1)+'" text-anchor="middle" style="font-size:10px;fill:#dbe4f3">'+(v>=1000?(v/1000).toFixed(0)+'k':v)+'</text>' +
+      '</g>';
+    }).join('');
+    return '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;display:block">'+bars+'</svg>';
+  }
+
+  document.querySelectorAll('.chip').forEach(function(chip){
+    chip.addEventListener('click', function(){
+      var idx = Number(chip.getAttribute('data-q'));
+      document.getElementById('qInput').value = chip.textContent;
+      chip.dataset.usedIdx = idx;
+      document.getElementById('qInput').dataset.answerIdx = idx;
+    });
+  });
+
+  document.getElementById('askForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var ds = document.getElementById('dsSelect').value;
+    var q = document.getElementById('qInput').value.trim();
+    if (!ds){ toast('Choose a data source first.', 'error'); return; }
+    if (!q){ toast('Type a question first.', 'error'); return; }
+
+    var idx = document.getElementById('qInput').dataset.answerIdx;
+    idx = (idx !== undefined && idx !== '') ? Number(idx) : 0;
+    var ans = ANSWERS[idx];
+
+    var resultHost = document.getElementById('askResult');
+    var submitBtn = document.getElementById('askSubmit');
+    submitBtn.disabled = true;
+    resultHost.innerHTML = '<div class="ask-result"><div class="card thinking"><span class="spinner"></span> Writing SQL and running it against your data…</div></div>';
+
+    setTimeout(function(){
+      submitBtn.disabled = false;
+      var chartBlock = ans.chart ? '<div class="card bar-card">' + barChartSvg(ans.chart.labels, ans.chart.values) + '</div>' : '';
+      resultHost.innerHTML = '<div class="ask-result">' +
+        '<div class="card sql-card"><div class="row"><div style="min-width:0;flex:1">' +
+          '<h3>Generated SQL</h3>' +
+          '<pre class="sql">' + ans.sql + '</pre>' +
+          '<p class="explain">' + ans.explanation + '</p>' +
+        '</div>' +
+        '<button class="btn-ghost" data-toast="Saved to dashboard is disabled in this preview.">' +
+          '<svg class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/><path d="M12 7v4M10 9h4"/></svg>' +
+          ' Save to dashboard</button>' +
+        '</div></div>' +
+        chartBlock +
+        '<div class="table-card"><table class="data"><thead><tr>' + ans.cols.map(function(c){ return '<th>'+c+'</th>'; }).join('') + '</tr></thead>' +
+        '<tbody>' + ans.rows.map(function(r){ return '<tr>' + r.map(function(v){ return '<td>'+v+'</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>' +
+      '</div>';
+    }, 850);
+  });
+
+  /* ---------------- init ---------------- */
+  renderInsights();
+  renderSourceHealth();
+  renderSourceGrid();
+  renderRecentQuestions();
+  renderDashList();
+  renderDashGrid();
+  renderTeam();
+  renderChart();
+  applyRole('ADMIN');
+
+})();
+</script>
+
+</body>
+</html>
