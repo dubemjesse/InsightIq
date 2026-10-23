@@ -42,14 +42,22 @@ export default function Login() {
           error={errors.email?.message}
           {...register('email', { required: 'Email is required' })}
         />
-        <Input
-          id="password"
-          type="password"
-          label="Password"
-          placeholder="••••••••"
-          error={errors.password?.message}
-          {...register('password', { required: 'Password is required' })}
-        />
+        <div>
+          <Input
+            id="password"
+            type="password"
+            label="Password"
+            placeholder="••••••••"
+            error={errors.password?.message}
+            {...register('password', { required: 'Password is required' })}
+          />
+          <Link
+            to="/forgot-password"
+            className="mt-1.5 inline-block text-xs font-medium text-electric hover:text-electric-light"
+          >
+            Forgot password?
+          </Link>
+        </div>
         <Button type="submit" isLoading={isSubmitting}>
           Log in
         </Button>

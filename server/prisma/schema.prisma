@@ -56,6 +56,11 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  // Forgot-password flow. We store a hash of the reset token (never the raw
+  // token) so a database leak alone can't be used to reset accounts.
+  resetPasswordTokenHash String?
+  resetPasswordExpiresAt DateTime?
+
   dataSources   DataSource[]
   dashboards    Dashboard[]
   savedQueries  SavedQuery[]

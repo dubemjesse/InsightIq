@@ -66,4 +66,35 @@ async function sendInsightsDigest(user, insights) {
   });
 }
 
-module.exports = { sendInsightsDigest, isConfigured };
+function renderPasswordResetHtml(user, resetUrl) {
+  return `
+  <div style="background:#03122a; padding: 32px; font-family: -apple-system, Segoe UI, Roboto, sans-serif;">
+    <div style="max-width: 480px; margin: 0 auto; background:#0c1930; border-radius: 12px; padding: 24px; border: 1px solid #1e304f;">
+      <div style="font-size: 18px; font-weight: 700; color: #ffffff;">Insight<span style="color:#378add;">IQ</span></div>
+      <p style="color:#94a3b8; font-size: 14px; margin-top: 12px;">Hi ${user.name}, we received a request to reset your password.</p>
+      <a href="${resetUrl}" style="display:inline-block; margin-top: 16px; padding: 10px 20px; background:#378add; color:#ffffff; font-weight:600; font-size: 14px; text-decoration:none; border-radius: 8px;">Reset your password</a>
+      <p style="color:#52617a; font-size: 12px; margin-top: 20px;">This link expires in 1 hour. If you didn't request this, you can safely ignore this email — your password won't be changed.</p>
+    </div>
+  </div>`;
+}
+
+/**
+ * Emails a password-reset link. Unlike the insights digest, a caller that
+ * can't actually send mail (SMTP not configured) needs to know — the
+ * controller falls back to logging the link to the console in that case —
+ * so this throws instead of silently no-oping.
+ */
+async function sendPasswordResetEmail(user, resetUrl) {
+  if (!isConfigured()) {
+    throw new Error('SMTP is not configured.');
+  }
+
+  await getTransporter().sendMail({
+    from: env.email.from,
+    to: user.email,
+    subject: 'Reset your InsightIQ password',
+    html: renderPasswordResetHtml(user, resetUrl),
+  });
+}
+
+module.exports = { sendInsightsDigest, sendPasswordResetEmail, isConfigured };

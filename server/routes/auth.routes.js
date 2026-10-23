@@ -3,7 +3,7 @@ const { body } = require('express-validator');
 const rateLimit = require('express-rate-limit');
 const validate = require('../middleware/validate');
 const { protect } = require('../middleware/auth.middleware');
-const { register, login, logout, getMe } = require('../controllers/auth.controller');
+const { register, login, logout, getMe, forgotPassword, resetPassword } = require('../controllers/auth.controller');
 
 const router = express.Router();
 
@@ -43,5 +43,24 @@ router.post(
 
 router.post('/logout', logout);
 router.get('/me', protect, getMe);
+
+router.post(
+  '/forgot-password',
+  authLimiter,
+  [body('email').isEmail().withMessage('A valid email is required.').normalizeEmail()],
+  validate,
+  forgotPassword
+);
+
+router.post(
+  '/reset-password',
+  authLimiter,
+  [
+    body('token').trim().notEmpty().withMessage('Reset token is required.'),
+    body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters.'),
+  ],
+  validate,
+  resetPassword
+);
 
 module.exports = router;
